@@ -36,9 +36,14 @@ const App: React.FC = () => {
       const result = await fetchFairyAnswer({ userData, isFollowUp });
       setAnswer(result);
       setView(ViewState.ANSWER);
-    } catch (err) {
-      setError(ERROR_MESSAGE);
-      setAnswer(ERROR_MESSAGE);
+    } catch (err: any) {
+      console.error(err);
+      // Append the actual error message for debugging
+      const debugInfo = err.message ? ` (${err.message})` : '';
+      const fullErrorMessage = ERROR_MESSAGE + debugInfo;
+      
+      setError(fullErrorMessage);
+      setAnswer(fullErrorMessage);
       setView(ViewState.ANSWER); // Show answer view but with error message
     }
   };
@@ -78,7 +83,7 @@ const App: React.FC = () => {
         <div className="bg-pink-400 p-2 border-b-4 border-pink-300 border-double flex justify-between items-center">
              <div className="text-white font-bold text-sm tracking-widest px-2 flex items-center gap-2">
                  <span>♥</span> 
-                 <span>Cynical Fairy Book</span>
+                 <span>仙女也會排泄之厭世解答之書</span>
                  <span>♥</span>
              </div>
              <div className="flex space-x-1">
@@ -90,8 +95,8 @@ const App: React.FC = () => {
 
         {/* Title Banner Area */}
         <div className="bg-pink-50 border-b-2 border-dashed border-pink-300 p-4 text-center bg-[url('https://www.transparenttextures.com/patterns/tiny-checkers.png')]">
-            <h1 className="text-2xl md:text-4xl font-bold text-pink-500 text-shadow-sm tracking-widest">
-                 仙女也會排泄之厭世解答之書
+            <h1 className="text-3xl md:text-5xl font-bold text-pink-500 text-shadow-sm font-serif italic tracking-wide">
+                 Cynical Fairy Book
             </h1>
             <p className="text-xs text-pink-400 mt-2">~ The fairy is watching you ~</p>
         </div>
@@ -192,7 +197,7 @@ const App: React.FC = () => {
                                     name="question"
                                     value={userData.question}
                                     onChange={handleInputChange}
-                                    placeholder="例如：我該離職嗎？..."
+                                    placeholder="例如：便祕了可以怎麼做？..."
                                     rows={3}
                                     className="w-full border-2 border-dashed border-pink-300 bg-pink-50 p-3 text-pink-700 focus:outline-none focus:border-pink-500 resize-none text-center"
                                 />

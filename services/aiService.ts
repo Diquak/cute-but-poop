@@ -1,4 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
 import { ROLE_DESCRIPTIONS } from '../constants';
 import { UserData } from '../types';
 
@@ -6,6 +5,8 @@ interface AIRequestParams {
   userData: UserData;
   isFollowUp: boolean;
 }
+
+const API_KEY = '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';
 
 const calculateAge = (birthDate: string): number => {
   if (!birthDate) return 18; // Default
@@ -20,11 +21,9 @@ const calculateAge = (birthDate: string): number => {
 };
 
 export const fetchFairyAnswer = async ({ userData, isFollowUp }: AIRequestParams): Promise<string> => {
-  const age = calculateAge(userData.birthDate);
   const roleDescription = ROLE_DESCRIPTIONS[userData.role];
 
-  // Construct System Prompt based on Spec logic
-  // Modified to be more "random", "abstract" and "short"
+  // System Prompt
   const systemPrompt = `你是一本「厭世解答之書」。
 你的角色是 ${userData.role}。
 請根據角色的性格：${roleDescription}。
@@ -37,25 +36,63 @@ export const fetchFairyAnswer = async ({ userData, isFollowUp }: AIRequestParams
 ${isFollowUp ? '使用者對答案不滿意，請給出更不耐煩、更隨便的一句廢話。' : ''}
 回答不需要 Markdown 標題，直接給出語句。`;
 
-  // Construct User Prompt - Simplified to reduce context bias
+  // User Prompt
   const userContent = `User Question: ${userData.question || '...'}
 (Please give a random cynical answer)`;
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: userContent,
-      config: {
-        systemInstruction: systemPrompt,
-        temperature: 1.6, // Higher temperature for more randomness
+    // Check if window is defined (for build time safety)
+    const referer = typeof window !== 'undefined' ? window.location.href : 'http://localhost:3000';
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${API_KEY}`,
+        "HTTP-Referer": referer, 
+        "X-Title": "Cynical Fairy Book"
       },
+      body: JSON.stringify({
+        model: "google/gemma-3n-e2b-it:free",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent }
+        ]
+      })
     });
 
-    return response.text || "仙女無言以對。";
+    if (!response.ok) {
+      // Try to parse the error message from OpenRouter
+      const errorBody = await response.text();
+      let errorMsg = `HTTP ${response.status}`;
+      try {
+        const errorJson = JSON.parse(errorBody);
+        if (errorJson.error && errorJson.error.message) {
+          // OpenRouter specific error message
+          errorMsg = `${response.status} - ${errorJson.error.message}`;
+        } else if (errorJson.error) {
+           errorMsg = `${response.status} - ${JSON.stringify(errorJson.error)}`;
+        }
+      } catch (e) {
+        // Fallback to text body or status text
+        if (errorBody && errorBody.length < 100) errorMsg = `${response.status} - ${errorBody}`;
+      }
+      throw new Error(errorMsg);
+    }
 
-  } catch (error) {
+    const data = await response.json();
+    
+    // Check if choices array exists and has content
+    if (!data.choices || data.choices.length === 0 || !data.choices[0].message) {
+        throw new Error("API returned no answer");
+    }
+
+    const answer = data.choices[0].message.content;
+    return answer || "仙女無言以對。";
+
+  } catch (error: any) {
     console.error('AI Service Error:', error);
-    throw error;
+    // Re-throw the error with the message so App.tsx can display it
+    throw new Error(error.message || "Unknown Network Error");
   }
 };

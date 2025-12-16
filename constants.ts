@@ -10,14 +10,14 @@ export const ROLE_DESCRIPTIONS: Record<FairyRole, string> = {
 // Marquee Texts
 export const MARQUEE_TEXTS = [
   "他到底喜不喜歡我？",
-  "工作好累我想離職...",
-  "午餐要吃什麼？",
-  "我是不是真的很廢？",
+  "腸胃科醫師說我沒救了",
+  "他是不是便祕所以不爽我？",
+  "我是不是真的很爛？",
   "為什麼薪水這麼少？",
-  "貓咪是不是看不起我？",
-  "活著的意義是什麼？",
-  "要不要傳訊息給前任？"
+  "是不是連捲筒衛生紙是不是看不起我？",
+  "便祕的意義是什麼？",
+  "要不要傳訊息給他？"
 ];
 
 // Fallback Messages
-export const ERROR_MESSAGE = "仙女去上廁所了，連訊號都便秘。請稍後再試。";
+export const ERROR_MESSAGE = "仙女可能又去拉了，戳戳看他的馬桶。(稍後再試)";
